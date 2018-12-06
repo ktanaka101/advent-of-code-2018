@@ -1,19 +1,14 @@
 module Day4_2
   extend self
 
-  FORMAT       = /\[(\d{4})-(\d{2})-(\d{2})\s(\d{2}):(\d{2})\]\s(.*)/
+  FORMAT       = /\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\]\s(.*)/
   GUARD_FORMAT = /Guard #(\d+) begins shift/
 
   def answer(lines : Array(String)) : Int32
     sorted_lines = lines.sort_by do |line|
       matched = FORMAT.match(line)
-      next Time.now unless matched
-      year = matched[1].to_i
-      month = matched[2].to_i
-      day = matched[3].to_i
-      hour = matched[4].to_i
-      minute = matched[5].to_i
-      Time.new(year, month, day, hour, minute, 0)
+      raise "#{line} not matched." unless matched
+      Time.parse_utc(matched[1], "%F %H:%M")
     end
 
     hs = {} of Int32 => Int32
@@ -25,25 +20,14 @@ module Day4_2
     sorted_lines.each do |line|
       matched = FORMAT.match(line)
       raise "#{line} not matched.(#{FORMAT})" unless matched
-      message = matched[6]
+      message = matched[2]
       case message
       when "falls asleep"
-        year = matched[1].to_i
-        month = matched[2].to_i
-        day = matched[3].to_i
-        hour = matched[4].to_i
-        minute = matched[5].to_i
-
-        begin_sleep_time = Time.new(year, month, day, hour, minute, 0)
+        begin_sleep_time = Time.parse_utc(matched[1], "%F %H:%M")
       when "wakes up"
-        year = matched[1].to_i
-        month = matched[2].to_i
-        day = matched[3].to_i
-        hour = matched[4].to_i
-        minute = matched[5].to_i
-
-        hs[id] += (Time.new(year, month, day, hour, minute, 0) - begin_sleep_time).total_minutes.to_i
-        timelines[id] << {begin_sleep_time, Time.new(year, month, day, hour, minute, 0)}
+        parse_time = Time.parse_utc(matched[1], "%F %H:%M")
+        hs[id] += (parse_time - begin_sleep_time).total_minutes.to_i
+        timelines[id] << {begin_sleep_time, parse_time}
       else
         guard = GUARD_FORMAT.match(message)
         raise "#{message} not matched.(#{GUARD_FORMAT})" unless guard
@@ -53,9 +37,7 @@ module Day4_2
       end
     end
 
-    must_sleep_guard = hs.max_by do |key, value|
-      value
-    end
+    must_sleep_guard = hs.max_by { |_, value| value }
 
     counter = {} of Int32 => Hash(Int32, Int32)
 
