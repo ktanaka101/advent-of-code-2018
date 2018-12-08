@@ -17,8 +17,8 @@ module Day8_2
     memo = [] of Int32
 
     child_node_num.times do |_|
-      sum, i = parser(input, i, sum)
-      memo << sum
+      _sum, i = parser(input, i, 0)
+      memo << _sum
     end
 
     if child_node_num == 0
